@@ -1,0 +1,157 @@
+
+#include <MessageSender.h>
+
+#include <IFTTTMessage.h>
+
+#include <WaterSensor.h>
+
+#include <WiFi.h>
+#include "WaterSensor.h"
+
+
+
+// --------------------------------------------------------------------------------------------------
+
+// Wifi stuff
+const char* wifiSSID      = "Network_Name_Goes_Here";      // Your router's ssid goes here
+const char* wifiPassword  = "Network_Password_Goes_Here";  // Password to router goes here
+
+// ifttt stuff
+const char* iftttKey      = "Maker_Key_Goes_Here";         // Key for ifttt.com API
+IFTTTMessageClass IFTTTSender(iftttKey);  // Communicates with ifttt.com
+
+// Water sensor stuff
+const byte  theSensorPin  = 4;                             // Analog IO pin connected to water level sensor
+
+
+WaterDetectState CurrentState = WaterDetectState::NO_SENSOR_DETECT,
+                 PreviousState = WaterDetectState::NO_SENSOR_DETECT;
+      
+
+// Need to make this
+WaterSensorClass theWaterSensor (theSensorPin); // constructor initializes pin, initializes everything else
+
+
+// --------------------------------------------------------------------------------------------------
+void setup() {
+  Serial.begin(115200); // Start serial communication for debug information
+  
+//  WiFi.mode(WIFI_STA);  // Setup the WiFi radio to connect to a wireless access point
+  ConnectWifi((char*)wifiSSID, (char*)wifiPassword);        // Connect to WiFi
+}
+
+// --------------------------------------------------------------------------------------------------
+void loop()
+{  
+  
+  // If  we're connected to Wifi ...
+  if(WiFi.status() != WL_CONNECTED) 
+  {
+      ConnectWifi((char*)wifiSSID, (char*)wifiPassword);  // Connect to WiFi  
+  }
+  
+  else  // We are connected to Wifi. Read water sensors and deal with the result
+  {
+
+    // Poll the sensor. There's a small chance that water could rise from
+    // zero to deep right after the read, but since I'm using this to monitor a basement,
+    // that would likely require a tsunami.
+    CurrentState = theWaterSensor.ReadSensor ();
+
+
+    // Now run through the FSM. We don't need to do anything if the state hasn't changed since last time
+    if (CurrentState != PreviousState)
+    {
+      switch (CurrentState)
+      {
+       case WaterDetectState::NO_SENSOR_DETECT:
+            // Send a message indicating flooding has subsided
+            break;
+            
+      case WaterDetectState::SHALLOW_SENSOR_DETECT:
+        switch (PreviousState)
+        {
+          case WaterDetectState::NO_SENSOR_DETECT:  
+           // Send message indicating flooding may have started
+           break;
+           
+           case WaterDetectState::DEEP_SENSOR_DETECT:
+              // Message message water level going down
+              break;
+
+            default:
+              // Message software error
+              break;
+
+        } // switch PreviousState
+        break; // switch CurrentState
+          
+ 
+        case WaterDetectState::DEEP_SENSOR_DETECT:
+          switch (PreviousState)
+          {
+            case WaterDetectState::SHALLOW_SENSOR_DETECT:
+              // Message flooding is getting worse
+              break;
+
+          case WaterDetectState::NO_SENSOR_DETECT:  
+           // Send message indicating fast flooding may have started 
+           break;
+
+            default:
+              // Message possible system fault
+              break;
+              
+          } // switch PreviousState
+          break;  //switch CurrentState
+
+        default:
+          // Message software error
+          break;  //switch CurrentState
+      } // switch CurrentState
+
+      // Update the previous state for next time
+      PreviousState = CurrentState;
+      
+    } // if CurrentState != PreviousState
+
+
+  } // if 
+  
+
+  // Wait 10 seconds before doing anything again
+  delay (10000);
+
+}
+
+
+// --------------------------------------------------------------------------------------------------
+bool ConnectWifi(char* ssid, char* password)  // Tries to connect to the wireless access point with the credentials provided
+{
+  bool timeOut = 0; // Change to 1 if connection times out
+  byte attempts = 0;   // Counter for the number of attempts to connect to wireless AP
+  
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  
+  WiFi.begin(ssid, password); // Connect to WiFi network
+
+  while (WiFi.status() != WL_CONNECTED && (timeOut == 0)) // Test to see if we're connected
+  {
+    Serial.print('.');
+    attempts++;
+    
+    if(attempts > 60) break; // Give up after ~30 seconds
+    else delay(500);      // Check again after 500ms
+  }
+  
+  if (WiFi.status() == WL_CONNECTED)  // We're connected
+  {
+    Serial.println("\r\nWiFi connected");
+  }
+  else  // Unable to connect
+  {
+    WiFi.disconnect();
+    Serial.println("\r\nConnection Timed Out!\r\n");
+  }
+}
