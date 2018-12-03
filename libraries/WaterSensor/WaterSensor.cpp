@@ -2,35 +2,32 @@
 
 #include "WaterSensor.h"
 
-WaterSensorClass::WaterSensorClass (const unsigned char sensorPin)
+WaterSensorClass::WaterSensorClass (const unsigned char sensorPin,
+	                                int shallowWaterLimit,
+	                                int deepWaterLimit)
 {
   SensorPin = sensorPin;
+  ShallowWaterLimit = shallowWaterLimit;
+  DeepWaterLimit = deepWaterLimit;
 }
 
 // -----------------------------------------------------------
 // Read the sensor and store result in WaterIsDetected
 WaterDetectState WaterSensorClass::ReadSensor (void)
 {    
-	
-	// Limit for shallow water 
-	const int shallowWaterLimit = 900;
-	
-	// Highest value sensor can return (when dry)
-	const int fullScaleReading = 1023;
-	
+	// Return value initialized to most likely state
 	WaterDetectState returnValue = WaterDetectState::NO_SENSOR_DETECT;
 	
 	// Read the analog pin - returns a value between 0 and maxSensorReading
 	int analogValue = analogRead(SensorPin);
 	
-	// Analog pin returns full voltage when dry
-	if (analogValue != fullScaleReading)
+	// Analog pin returns higher value when sensor is wet
+	if (analogValue > ShallowWaterLimit)
 	{
 		// If we got here, we're wet
-		if (analogValue > shallowWaterLimit)
+		if (analogValue > DeepWaterLimit)
 			returnValue = WaterDetectState::DEEP_SENSOR_DETECT;
-		else
-			returnValue = WaterDetectState::SHALLOW_SENSOR_DETECT;
-	}	
+	}
+
 	return (returnValue);
 }

@@ -21,7 +21,7 @@ const char* iftttKey      = "Maker_Key_Goes_Here";         // Key for ifttt.com 
 IFTTTMessageClass IFTTTSender(iftttKey);  // Communicates with ifttt.com
 
 // Water sensor stuff
-const byte  theSensorPin  = 4;                             // Analog IO pin connected to water level sensor
+const int  theSensorPin  = A0;                             // Analog IO pin connected to water level sensor
 
 
 WaterDetectState CurrentState = WaterDetectState::NO_SENSOR_DETECT,
@@ -50,9 +50,57 @@ void loop()
       ConnectWifi((char*)wifiSSID, (char*)wifiPassword);  // Connect to WiFi  
   }
   
-  else  // We are connected to Wifi. Read water sensors and deal with the result
+  else  // We are connected to Wifi. Read sensors and deal with the result
   {
+    ServiceWaterSensor();
 
+    // ServiceTemperatureSensor();
+
+    // ServiceTerminal();   // Need to do this more often than every 10 seconds
+    
+  }
+  
+
+  // Wait 10 seconds before doing anything again
+  delay (10000);
+
+}
+
+
+// --------------------------------------------------------------------------------------------------
+bool ConnectWifi(char* ssid, char* password)  // Tries to connect to the wireless access point with the credentials provided
+{
+  bool timeOut = 0; // Change to 1 if connection times out
+  byte attempts = 0;   // Counter for the number of attempts to connect to wireless AP
+  
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  
+  WiFi.begin(ssid, password); // Connect to WiFi network
+
+  while (WiFi.status() != WL_CONNECTED && (timeOut == 0)) // Test to see if we're connected
+  {
+    Serial.print('.');
+    attempts++;
+    
+    if(attempts > 60) break; // Give up after ~30 seconds
+    else delay(500);      // Check again after 500ms
+  }
+  
+  if (WiFi.status() == WL_CONNECTED)  // We're connected
+  {
+    Serial.println("\r\nWiFi connected");
+  }
+  else  // Unable to connect
+  {
+    WiFi.disconnect();
+    Serial.println("\r\nConnection Timed Out!\r\n");
+  }
+}
+
+// --------------------------------------------------------------------------------------------------
+void ServiceWaterSensor(void)
+{
     // Poll the sensor. There's a small chance that water could rise from
     // zero to deep right after the read, but since I'm using this to monitor a basement,
     // that would likely require a tsunami.
@@ -114,44 +162,4 @@ void loop()
       PreviousState = CurrentState;
       
     } // if CurrentState != PreviousState
-
-
-  } // if 
-  
-
-  // Wait 10 seconds before doing anything again
-  delay (10000);
-
-}
-
-
-// --------------------------------------------------------------------------------------------------
-bool ConnectWifi(char* ssid, char* password)  // Tries to connect to the wireless access point with the credentials provided
-{
-  bool timeOut = 0; // Change to 1 if connection times out
-  byte attempts = 0;   // Counter for the number of attempts to connect to wireless AP
-  
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  
-  WiFi.begin(ssid, password); // Connect to WiFi network
-
-  while (WiFi.status() != WL_CONNECTED && (timeOut == 0)) // Test to see if we're connected
-  {
-    Serial.print('.');
-    attempts++;
-    
-    if(attempts > 60) break; // Give up after ~30 seconds
-    else delay(500);      // Check again after 500ms
-  }
-  
-  if (WiFi.status() == WL_CONNECTED)  // We're connected
-  {
-    Serial.println("\r\nWiFi connected");
-  }
-  else  // Unable to connect
-  {
-    WiFi.disconnect();
-    Serial.println("\r\nConnection Timed Out!\r\n");
-  }
 }
