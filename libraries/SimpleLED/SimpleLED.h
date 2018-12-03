@@ -1,0 +1,86 @@
+#ifndef _SIMPLE_LED_H
+#define _SIMPLE_LED_H
+
+/*
+Copyright © 2011 Scott Henwood/shensicle photographic. All Rights Reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, 
+   this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, 
+   this list of conditions and the following disclaimer in the documentation 
+   and/or other materials provided with the distribution.
+
+3. The name of the author may not be used to endorse or promote products 
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY Scott Henwood/shensicle photographic "AS IS" AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
+OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#include <TwoStateOutput.h>
+
+class SimpleLED : public TwoStateOutput
+{
+private:
+		
+	typedef enum {OFF, ON} led_state_type;
+	led_state_type CurrentState;
+	
+	// A flag which, when set, indicates we are flashing
+	bool FlashMode;
+	
+	// Number of milliseconds until next change if we are in low
+	// power mode or if we are flashing.
+	unsigned long TimeToNextStateChange;
+
+	
+protected:
+	
+	// How often our update function is called
+	unsigned long UpdateInterval;  // milliseconds
+	
+	// LED flash period
+	unsigned long FlashDuration;   // milliseconds
+	
+	// A flag which, when set, indicates that we should just flash
+	// the LED when it is turned on, rather than leaving it on continuously
+	bool IsLowPowerMode;
+	
+public:
+	SimpleLED (byte outputPin,
+		bool isActiveHigh,
+		unsigned long updateInterval,       // milliseconds
+		unsigned long flashDuration = 300); // milliseconds
+	
+	
+	// Method to enable/disable flashing
+	void SetFlashMode (bool flashEnabled);
+
+	// Method to determine whether or not we are in low power mode. When in
+	// low power mode, LEDs only stay on briefly when turned on.
+	void SetLowPowerMode (bool isEnabled);
+	
+	// Method called by the controlling program at UpdateInterval to allow
+	// us to manage the LED. Returns true if we are still running after
+	// the call and false otherwise.
+	bool Update (void);
+	
+	// Change LED state
+	virtual void SetOn (void);
+	virtual void SetOff (void);
+};
+
+
+#endif
