@@ -10,7 +10,7 @@ class MessageSenderClass
     MessageSenderClass (void) {};
 
     // Send a message. Return value indicates whether or not message was successfully sent
-    virtual boolean Send (String theMessage) = 0;
+    virtual bool Send (String theMessage) = 0;
   
 };
 

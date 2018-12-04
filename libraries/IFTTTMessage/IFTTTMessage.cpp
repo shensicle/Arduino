@@ -25,7 +25,7 @@ void IFTTTMessageClass::Connect (void)
 
 // -----------------------------------------------------
 // Send a message. Return value indicates whether or not message was successfully sent
-boolean IFTTTMessageClass::Send (String theMessage)
+bool IFTTTMessageClass::Send (String theMessage)
 {
     // Packet will end up looking similar to this:
   // 
@@ -43,7 +43,8 @@ boolean IFTTTMessageClass::Send (String theMessage)
  // else postData.concat("LOW ");
   postData.concat("\"}");
     
-  TheClient.print("POST /trigger/");
+/*
+TheClient.print("POST /trigger/");
   TheClient.print("ESP");
   TheClient.print("/with/key/");
   TheClient.print(APIKey);
@@ -58,4 +59,5 @@ boolean IFTTTMessageClass::Send (String theMessage)
   TheClient.println(postData.length());
   TheClient.println();
   TheClient.println(postData);
+  */
 }

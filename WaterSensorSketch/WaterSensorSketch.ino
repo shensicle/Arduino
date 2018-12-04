@@ -1,3 +1,22 @@
+#include <WiFiServerSecure.h>
+#include <WiFiClientSecure.h>
+#include <WiFiClientSecureBearSSL.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
+#include <WiFiUdp.h>
+#include <ESP8266WiFiType.h>
+#include <CertStoreBearSSL.h>
+#include <ESP8266WiFiAP.h>
+#include <WiFiClient.h>
+#include <BearSSLHelpers.h>
+#include <WiFiServer.h>
+#include <ESP8266WiFiScan.h>
+#include <WiFiServerSecureBearSSL.h>
+#include <ESP8266WiFiGeneric.h>
+#include <ESP8266WiFiSTA.h>
+#include <WiFiClientSecureAxTLS.h>
+#include <WiFiServerSecureAxTLS.h>
+
 
 #include <MessageSender.h>
 
@@ -5,7 +24,7 @@
 
 #include <WaterSensor.h>
 
-#include <WiFi.h>
+
 #include "WaterSensor.h"
 
 
@@ -13,8 +32,8 @@
 // --------------------------------------------------------------------------------------------------
 
 // Wifi stuff
-const char* wifiSSID      = "Network_Name_Goes_Here";      // Your router's ssid goes here
-const char* wifiPassword  = "Network_Password_Goes_Here";  // Password to router goes here
+const char* wifiSSID      = "OVIS-4FEF-2.4G";      // Your router's ssid goes here
+const char* wifiPassword  = "BR21706502790";  // Password to router goes here
 
 // ifttt stuff
 const char* iftttKey      = "Maker_Key_Goes_Here";         // Key for ifttt.com API
@@ -43,6 +62,7 @@ void setup() {
 // --------------------------------------------------------------------------------------------------
 void loop()
 {  
+  Serial.print ("Loop\n");
   
   // If  we're connected to Wifi ...
   if(WiFi.status() != WL_CONNECTED) 
@@ -77,6 +97,7 @@ bool ConnectWifi(char* ssid, char* password)  // Tries to connect to the wireles
   Serial.println(ssid);
   
   WiFi.begin(ssid, password); // Connect to WiFi network
+Serial.println ("TP1");
 
   while (WiFi.status() != WL_CONNECTED && (timeOut == 0)) // Test to see if we're connected
   {
