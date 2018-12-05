@@ -2,25 +2,36 @@
 #include "IFTTTMessage.h"
 
 // -----------------------------------------------------
-IFTTTMessageClass::IFTTTMessageClass (const char* theAPIKey) : MessageSenderClass()
+IFTTTMessageClass::IFTTTMessageClass (const char* theAPIKey, char* theTag) : MessageSenderClass()
 
 {
-    APIKey = (char*)theAPIKey;
+
+    TheTag = theTag;
+    PostString =   "POST /trigger/ESP/with/key/";
+    PostString += theAPIKey;
+    PostString += " HTTP/1.1\nHost: maker.ifttt.com\nUser-Agent: ShensicleSensor\nConnection: close\nContent-Type: application/json\nContent-Length: ";
+
 }
 
 // -----------------------------------------------------
 // Connect to the ifttt service.
-void IFTTTMessageClass::Connect (void)
+bool IFTTTMessageClass::Connect (void)
 {
+   // Value which, when set, indicates connection to IFTTT server was successful
+   bool returnValue = true;
+   
    Serial.println("Connecting to IFTTT...");
    if(TheClient.connect("maker.ifttt.com",80))  // Test the connection to the server
    {
-     Serial.println("Connected to Maker");
+     Serial.println("Connected to ifttt");
    }
    else
    {
-     Serial.println("Failed to connect to Maker.");
+     Serial.println("Failed to connect to ifttt.");
+     returnValue = false;
    }
+   
+   return (returnValue);
 }
 
 // -----------------------------------------------------
@@ -38,26 +49,35 @@ bool IFTTTMessageClass::Send (String theMessage)
   //  
   //  {"value1":"(HIGH/LOW )"}
   
-  String postData = "{\"value1\":\""; // JSON value to send in SMS message
+  
+    if (Connect())
+    {
+  	    String postData = PostString;
+  	    postData.concat ("{\"");
+  	    postData.concat (TheTag);
+  	    postData.concat ("\":\"");
+  	    postData.concat (theMessage);
+  	    postData.concat("\"}");
+//  String postData = "{\"value1\":\""; // JSON value to send in SMS message
  // if(waterLevel) postData.concat("HIGH");
  // else postData.concat("LOW ");
-  postData.concat("\"}");
+ // postData.concat("\"}");
     
-/*
-TheClient.print("POST /trigger/");
-  TheClient.print("ESP");
-  TheClient.print("/with/key/");
-  TheClient.print(APIKey);
-  TheClient.println(" HTTP/1.1");
 
-  TheClient.println("Host: maker.ifttt.com");
-  TheClient.println("User-Agent: WaterSensor");
-  TheClient.println("Connection: close");
+//  TheClient.print("POST /trigger/");
+//  TheClient.print("ESP");
+//  TheClient.print("/with/key/");
+//  TheClient.print(APIKey);
+//  TheClient.println(" HTTP/1.1");
 
-  TheClient.println("Content-Type: application/json");
-  TheClient.print("Content-Length: ");
-  TheClient.println(postData.length());
-  TheClient.println();
-  TheClient.println(postData);
-  */
+//  TheClient.println("Host: maker.ifttt.com");
+//  TheClient.println("User-Agent: WaterSensor");
+//  TheClient.println("Connection: close");
+
+//  TheClient.println("Content-Type: application/json");
+//  TheClient.print("Content-Length: ");
+      TheClient.println(postData.length());
+      TheClient.println();
+      TheClient.println(postData);
+    }
 }

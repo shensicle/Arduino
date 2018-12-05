@@ -37,7 +37,7 @@ const char* wifiPassword  = "BR21706502790";  // Password to router goes here
 
 // ifttt stuff
 const char* iftttKey      = "Maker_Key_Goes_Here";         // Key for ifttt.com API
-IFTTTMessageClass IFTTTSender(iftttKey);  // Communicates with ifttt.com
+IFTTTMessageClass IFTTTSender(iftttKey, "Sensor1");  // Communicates with ifttt.com
 
 // Water sensor stuff
 const int  theSensorPin  = A0;                             // Analog IO pin connected to water level sensor
@@ -132,6 +132,7 @@ void ServiceWaterSensor(void)
       {
        case WaterDetectState::NO_SENSOR_DETECT:
             // Send a message indicating flooding has subsided
+            IFTTTSender.Send ("No water detected");
             break;
             
       case WaterDetectState::SHALLOW_SENSOR_DETECT:
@@ -139,14 +140,17 @@ void ServiceWaterSensor(void)
         {
           case WaterDetectState::NO_SENSOR_DETECT:  
            // Send message indicating flooding may have started
+           IFTTTSender.Send ("Water detected at shallow level");
            break;
            
            case WaterDetectState::DEEP_SENSOR_DETECT:
               // Message message water level going down
+              IFTTTSender.Send ("Water has gone down to shallow level");
               break;
 
             default:
               // Message software error
+              IFTTTSender.Send ("Software Error: 1");
               break;
 
         } // switch PreviousState
@@ -158,14 +162,18 @@ void ServiceWaterSensor(void)
           {
             case WaterDetectState::SHALLOW_SENSOR_DETECT:
               // Message flooding is getting worse
+              IFTTTSender.Send ("Water has risen to deep level");
               break;
 
           case WaterDetectState::NO_SENSOR_DETECT:  
-           // Send message indicating fast flooding may have started 
+              // Send message indicating fast flooding may have started 
+              IFTTTSender.Send ("Water fast rise to deep level");
+           
            break;
 
             default:
               // Message possible system fault
+              IFTTTSender.Send ("Software Error: 2");
               break;
               
           } // switch PreviousState
@@ -173,6 +181,8 @@ void ServiceWaterSensor(void)
 
         default:
           // Message software error
+          IFTTTSender.Send ("Software Error: 3");
+
           break;  //switch CurrentState
       } // switch CurrentState
 
