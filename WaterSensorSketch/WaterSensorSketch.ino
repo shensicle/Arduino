@@ -55,14 +55,12 @@ WaterSensorClass theWaterSensor (theSensorPin); // constructor initializes pin, 
 void setup() {
   Serial.begin(115200); // Start serial communication for debug information
   
-//  WiFi.mode(WIFI_STA);  // Setup the WiFi radio to connect to a wireless access point
   ConnectWifi((char*)wifiSSID, (char*)wifiPassword);        // Connect to WiFi
 }
 
 // --------------------------------------------------------------------------------------------------
 void loop()
 {  
-  Serial.print ("Loop\n");
   
   // If  we're connected to Wifi ...
   if(WiFi.status() != WL_CONNECTED) 
@@ -97,7 +95,6 @@ bool ConnectWifi(char* ssid, char* password)  // Tries to connect to the wireles
   Serial.println(ssid);
   
   WiFi.begin(ssid, password); // Connect to WiFi network
-Serial.println ("TP1");
 
   while (WiFi.status() != WL_CONNECTED && (timeOut == 0)) // Test to see if we're connected
   {
