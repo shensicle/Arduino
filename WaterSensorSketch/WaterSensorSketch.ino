@@ -36,8 +36,8 @@ const char* wifiSSID      = "OVIS-4FEF-2.4G";      // Your router's ssid goes he
 const char* wifiPassword  = "BR21706502790";  // Password to router goes here
 
 // ifttt stuff
-const char* iftttKey      = "Maker_Key_Goes_Here";         // Key for ifttt.com API
-IFTTTMessageClass IFTTTSender(iftttKey, "Sensor1");  // Communicates with ifttt.com
+const char* iftttKey      = "bdf53ikwIP3q107qlHt6s4"; // Key for ifttt.com API
+IFTTTMessageClass IFTTTSender(iftttKey, "Sensor1");   // Communicates with ifttt.com
 
 // Water sensor stuff
 const int  theSensorPin  = A0;                             // Analog IO pin connected to water level sensor
