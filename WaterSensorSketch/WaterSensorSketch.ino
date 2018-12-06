@@ -31,16 +31,33 @@
 
 // --------------------------------------------------------------------------------------------------
 
+#include "Passwords.h"
+
+/*
 // Wifi stuff
 const char* wifiSSID      = "Wifi goes here";      // Your router's ssid goes here
 const char* wifiPassword  = "Password goes here";  // Password to router goes here
 
 // ifttt stuff
 const char* iftttKey      = "api key goes here"; // Key for ifttt.com API
+
 IFTTTMessageClass IFTTTSender(iftttKey, "Sensor1");   // Communicates with ifttt.com
+*/
 
 // Water sensor stuff
 const int  theSensorPin  = A0;                             // Analog IO pin connected to water level sensor
+
+// Structure to save a personality file for this sketch in EEPROM
+typedef struct
+{
+      char WifiSSID[20];
+      char WifiPassword[20];
+      char IFTTTKey[30];  
+      char UUID[20];
+      bool HasWaterSensor;
+      bool HasTempSensor;
+      bool HasBuzzer;
+} personality_t;
 
 
 WaterDetectState CurrentState = WaterDetectState::NO_SENSOR_DETECT,
