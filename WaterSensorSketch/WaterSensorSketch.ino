@@ -26,6 +26,12 @@
 #include "PersonalityDefs.h"
 #include <Personality.h>
 
+// Constants we use in the loop() method to serivce hardware at different intervals
+const unsigned int delayPerLoop = 500;   //milliseconds
+const unsigned int ledUpdateCount = 1;   // update LED every half second
+const unsigned int waterSensorUpdateCount =  20;  // check water sensor every 10 seconds
+const unsigned int tempSensorUpdateCount  = 20;   // check temperature sensor every 10 seconds
+
 // --------------------------------------------------------------------------------------------------
 
 IFTTTMessageClass IFTTTSender;   // Communicates with ifttt.com
@@ -93,6 +99,8 @@ void setup() {
 // --------------------------------------------------------------------------------------------------
 void loop()
 {  
+  // Count each loop to determine when we're supposed to service the various hardware devices
+  static unsigned int loopCounter = 0;
   
   // If  we're connected to Wifi ...
   if(WiFi.status() != WL_CONNECTED) 
@@ -102,17 +110,21 @@ void loop()
   
   else  // We are connected to Wifi. Read sensors and deal with the result
   {
-    ServiceWaterSensor();
 
+    if ((loopCounter % waterSensorUpdateCount) == 0)
+      ServiceWaterSensor();
+
+//  if ((loopCounter % tempSensorUpdateCount) == 0)
     // ServiceTemperatureSensor();
 
-    // ServiceTerminal();   // Need to do this more often than every 10 seconds
-    
+    if ((loopCounter % ledUpdateCount) == 0)
+      ServiceLED ();
+
+    loopCounter ++;
   }
   
-
   // Wait 10 seconds before doing anything again
-  delay (10000);
+  delay (delayPerLoop);
 
 }
 
@@ -222,4 +234,9 @@ void ServiceWaterSensor(void)
       PreviousState = CurrentState;
       
     } // if CurrentState != PreviousState
+}
+
+// --------------------------------------------------------------------------------------------------
+void ServiceLED (void)
+{
 }
