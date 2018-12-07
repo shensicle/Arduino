@@ -30,7 +30,7 @@ PersonalityClass::PersonalityClass (void)
 // Write personality information to EEPROM, adding a checksum
 void PersonalityClass::Write (personality_t* thePersonality)
 {
-	uint writeAddr = 0;
+	unsigned writeAddr = 0;
 	
 	unsigned char checksum = CalculateChecksum (thePersonality);
 	
@@ -40,6 +40,8 @@ void PersonalityClass::Write (personality_t* thePersonality)
 	// Write the checksum
 	writeAddr += sizeof (*thePersonality);
 	EEPROM.put (writeAddr, checksum);
+	
+	EEPROM.commit();
 }
 		
 
@@ -49,7 +51,7 @@ void PersonalityClass::Write (personality_t* thePersonality)
 bool PersonalityClass::Read(personality_t* thePersonality)
 {
 	bool returnValue = true;
-	uint readAddr = 0;
+	unsigned readAddr = 0;
 
 	// Zero out personality structure. Helps to null-terminate strings
 	memset (thePersonality, 0, sizeof (*thePersonality));
@@ -66,8 +68,7 @@ bool PersonalityClass::Read(personality_t* thePersonality)
 	EEPROM.get (readAddr, storedChecksum);
 	
 
-	// Checksums are 1's complement so sum should always be 0xff
-	if (checksum + storedChecksum != 0xff)
+	if (checksum != storedChecksum)
 		returnValue = false;
 	
 	return (returnValue);

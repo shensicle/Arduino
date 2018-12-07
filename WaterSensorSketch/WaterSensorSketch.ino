@@ -24,6 +24,7 @@
 
 #include <WaterSensor.h>
 #include "PersonalityDefs.h"
+#include <Personality.h>
 
 // --------------------------------------------------------------------------------------------------
 
@@ -57,6 +58,49 @@ void setup() {
   Serial.begin(115200); // Start serial communication for debug information
   
   ConnectWifi((char*)wifiSSID, (char*)wifiPassword);        // Connect to WiFi
+
+  personality_t pers;
+  memset (&pers, 0, sizeof (pers));
+
+      PersonalityClass ThePers;
+
+      strcpy ((char*)&pers.WifiSSID, wifiSSID);
+      strcpy ((char*)&pers.WifiPassword, wifiPassword);
+      strcpy ((char*)&pers.IFTTTKey, iftttKey);  
+      strcpy ((char*)&pers.UUID, "Sensor1");
+      pers.HasWaterSensor = true;
+      pers.HasTempSensor = false;
+      pers.HasBuzzer = true;
+
+      Serial.println ("Before Write");
+      Serial.println (pers.WifiSSID);
+      Serial.println (pers.WifiPassword);
+      Serial.println (pers.IFTTTKey);
+      Serial.println (pers.UUID);
+
+      ThePers.Write (&pers);
+      Serial.println ("After Write");
+      Serial.println (pers.WifiSSID);
+      Serial.println (pers.WifiPassword);
+      Serial.println (pers.IFTTTKey);
+      Serial.println (pers.UUID);
+
+      Serial.println ("________________________");
+      bool okay = ThePers.Read(&pers);
+      if (okay == true)
+      {
+        Serial.print ("Checksum is "); Serial.println (okay);
+      Serial.println (pers.WifiSSID);
+      Serial.println (pers.WifiPassword);
+      Serial.println (pers.IFTTTKey);
+      Serial.println (pers.UUID);
+       Serial.println ("________________________");
+     }
+
+      else
+      {
+        Serial.println ("Checksum failure");
+      }
 }
 
 // --------------------------------------------------------------------------------------------------
