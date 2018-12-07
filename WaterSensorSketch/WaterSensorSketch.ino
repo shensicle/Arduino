@@ -28,22 +28,18 @@
 
 // --------------------------------------------------------------------------------------------------
 
-#include "Passwords.h"
-
-/*
-// Wifi stuff
-const char* wifiSSID      = "Wifi goes here";      // Your router's ssid goes here
-const char* wifiPassword  = "Password goes here";  // Password to router goes here
-
-// ifttt stuff
-const char* iftttKey      = "api key goes here"; // Key for ifttt.com API
-*/
 IFTTTMessageClass IFTTTSender;   // Communicates with ifttt.com
+
+// Structure that stores our personality
+personality_t pers;
+
 
 
 // Water sensor stuff
-const int  theSensorPin  = A0;                             // Analog IO pin connected to water level sensor
+const int  theSensorPin  = A0;        // Analog IO pin connected to water level sensor
 
+// Buzzer stuff
+//const int theBuzzerPin = D4;          // Digital IO pin for buzzer
 
 WaterDetectState CurrentState = WaterDetectState::NO_SENSOR_DETECT,
                  PreviousState = WaterDetectState::NO_SENSOR_DETECT;
@@ -55,55 +51,43 @@ WaterSensorClass theWaterSensor (theSensorPin); // constructor initializes pin, 
 
 // --------------------------------------------------------------------------------------------------
 void setup() {
-  Serial.begin(115200); // Start serial communication for debug information
-  
-  ConnectWifi((char*)wifiSSID, (char*)wifiPassword);        // Connect to WiFi
 
-  personality_t pers;
+  // Start serial communication for debug information
+  Serial.begin(115200); 
+
+  // Clear personality structure, just because
   memset (&pers, 0, sizeof (pers));
 
-      PersonalityClass ThePers;
-/*
-      strcpy ((char*)&pers.WifiSSID, wifiSSID);
-      strcpy ((char*)&pers.WifiPassword, wifiPassword);
-      strcpy ((char*)&pers.IFTTTKey, iftttKey);  
-      strcpy ((char*)&pers.UUID, "Sensor1");
-      pers.HasWaterSensor = true;
-      pers.HasTempSensor = false;
-      pers.HasBuzzer = true;
+  // Object to read personality data from EEPROM
+  PersonalityClass persReader;
 
-      Serial.println ("Before Write");
-      Serial.println (pers.WifiSSID);
-      Serial.println (pers.WifiPassword);
-      Serial.println (pers.IFTTTKey);
-      Serial.println (pers.UUID);
+  bool okay = persReader.Read(&pers);
+  if (okay == true)
+  {
+    Serial.print ("\nChecksum is "); Serial.println (okay);
+    Serial.print ("Sensor ID: "); Serial.println (pers.UUID);
 
-      ThePers.Write (&pers);
-      Serial.println ("After Write");
-      Serial.println (pers.WifiSSID);
-      Serial.println (pers.WifiPassword);
-      Serial.println (pers.IFTTTKey);
-      Serial.println (pers.UUID);
-*/
-      Serial.println ("________________________");
-      bool okay = ThePers.Read(&pers);
-      if (okay == true)
-      {
-        Serial.print ("Checksum is "); Serial.println (okay);
-      Serial.println (pers.WifiSSID);
-      Serial.println (pers.WifiPassword);
-      Serial.println (pers.IFTTTKey);
-      Serial.println (pers.UUID);
-       Serial.println ("________________________");
+   // We can now initialize fields to be sent to IFTTT that were in the personality
+   IFTTTSender.Initialize (pers.IFTTTKey, pers.UUID);
 
-       // We can now initialize fields to be sent to IFTTT that were in the personality
-       IFTTTSender.Initialize (pers.IFTTTKey, pers.UUID);
-     }
+   // And if we have a buzzer, set it up too
+// if (pers.HasBuzzer)
+//     pinMode(buzzerPin, OUTPUT);
 
-      else
-      {
-        Serial.println ("Checksum failure");
-      }
+       // Now connect to Wifi for the first time and send a startup message
+       ConnectWifi(pers.WifiSSID, pers.WifiPassword);  // Connect to WiFi 
+
+       IFTTTSender.Send ("Device startup");
+  }
+
+  else
+  {
+     Serial.println ("*** Personality checksum failure ***");
+
+     // No point in continuing
+     while (1)
+       delay (500);
+  }
 }
 
 // --------------------------------------------------------------------------------------------------
@@ -113,7 +97,7 @@ void loop()
   // If  we're connected to Wifi ...
   if(WiFi.status() != WL_CONNECTED) 
   {
-      ConnectWifi((char*)wifiSSID, (char*)wifiPassword);  // Connect to WiFi  
+      ConnectWifi(pers.WifiSSID, pers.WifiPassword);  // Connect to WiFi  
   }
   
   else  // We are connected to Wifi. Read sensors and deal with the result
@@ -198,7 +182,7 @@ void ServiceWaterSensor(void)
 
             default:
               // Message software error
-              IFTTTSender.Send ("Software Error: 1");
+              IFTTTSender.Send ("Software Error: Water Sensor 1");
               break;
 
         } // switch PreviousState
@@ -221,7 +205,7 @@ void ServiceWaterSensor(void)
 
             default:
               // Message possible system fault
-              IFTTTSender.Send ("Software Error: 2");
+              IFTTTSender.Send ("Software Error: Water Sensor 2");
               break;
               
           } // switch PreviousState
@@ -229,7 +213,7 @@ void ServiceWaterSensor(void)
 
         default:
           // Message software error
-          IFTTTSender.Send ("Software Error: 3");
+          IFTTTSender.Send ("Software Error: Water Sensor 3");
 
           break;  //switch CurrentState
       } // switch CurrentState
