@@ -2,15 +2,23 @@
 #include "IFTTTMessage.h"
 
 // -----------------------------------------------------
-IFTTTMessageClass::IFTTTMessageClass (const char* theAPIKey, char* theTag) : MessageSenderClass()
+IFTTTMessageClass::IFTTTMessageClass (void)
 
 {
+}
 
-    TheTag = theTag;
-    PostString =   "POST /trigger/ESP/with/key/";
+// -----------------------------------------------------
+// Initialize - pass in API key for IFTTT and a tag to use in the JSON packet,
+// which is typically a unique identifier for this host. This can't be done in
+// constructor as we have to wait for personality to be read from EEPROM. Call
+// this method once before calling Send()
+void IFTTTMessageClass::Initialize (const char* theAPIKey, const char* sensorID)
+
+{
+    SensorID = sensorID;
+    PostString =   "POST /trigger/sensor_alert/with/key/";
     PostString += theAPIKey;
     PostString += " HTTP/1.1\nHost: maker.ifttt.com\nUser-Agent: ShensicleSensor\nConnection: close\nContent-Type: application/json\nContent-Length: ";
-
 }
 
 // -----------------------------------------------------
@@ -52,16 +60,13 @@ bool IFTTTMessageClass::Send (String theMessage)
   
     if (Connect())
     {
+    	// Note that ifttt only supports labels value1, value2, value3
   	    String postData = PostString;
-  	    postData.concat ("{\"");
-  	    postData.concat (TheTag);
-  	    postData.concat ("\":\"");
-  	    postData.concat (theMessage);
+  	    postData.concat ("{\"value1\":\"");
+   	    postData.concat (SensorID);
+  	    postData.concat ("\",\"value2\":\"");
+  	    postData.concat(theMessage);
   	    postData.concat("\"}");
-//  String postData = "{\"value1\":\""; // JSON value to send in SMS message
- // if(waterLevel) postData.concat("HIGH");
- // else postData.concat("LOW ");
- // postData.concat("\"}");
     
 
 //  TheClient.print("POST /trigger/");
@@ -81,3 +86,4 @@ bool IFTTTMessageClass::Send (String theMessage)
       TheClient.println(postData);
     }
 }
+

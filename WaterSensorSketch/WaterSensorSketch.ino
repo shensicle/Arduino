@@ -37,9 +37,9 @@ const char* wifiPassword  = "Password goes here";  // Password to router goes he
 
 // ifttt stuff
 const char* iftttKey      = "api key goes here"; // Key for ifttt.com API
-
-IFTTTMessageClass IFTTTSender(iftttKey, "Sensor1");   // Communicates with ifttt.com
 */
+IFTTTMessageClass IFTTTSender;   // Communicates with ifttt.com
+
 
 // Water sensor stuff
 const int  theSensorPin  = A0;                             // Analog IO pin connected to water level sensor
@@ -63,7 +63,7 @@ void setup() {
   memset (&pers, 0, sizeof (pers));
 
       PersonalityClass ThePers;
-
+/*
       strcpy ((char*)&pers.WifiSSID, wifiSSID);
       strcpy ((char*)&pers.WifiPassword, wifiPassword);
       strcpy ((char*)&pers.IFTTTKey, iftttKey);  
@@ -84,7 +84,7 @@ void setup() {
       Serial.println (pers.WifiPassword);
       Serial.println (pers.IFTTTKey);
       Serial.println (pers.UUID);
-
+*/
       Serial.println ("________________________");
       bool okay = ThePers.Read(&pers);
       if (okay == true)
@@ -95,6 +95,9 @@ void setup() {
       Serial.println (pers.IFTTTKey);
       Serial.println (pers.UUID);
        Serial.println ("________________________");
+
+       // We can now initialize fields to be sent to IFTTT that were in the personality
+       IFTTTSender.Initialize (pers.IFTTTKey, pers.UUID);
      }
 
       else

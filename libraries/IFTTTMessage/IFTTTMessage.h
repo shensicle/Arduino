@@ -23,9 +23,7 @@
 #include <WiFiServerSecureAxTLS.h>
 
 
-#include "MessageSender.h"
-
-class IFTTTMessageClass : MessageSenderClass
+class IFTTTMessageClass
 {
   private:
     char* APIKey;
@@ -34,9 +32,9 @@ class IFTTTMessageClass : MessageSenderClass
     // String used for static parts of message sent to IFTTT
     String PostString;    
     
-    // String used to hold the first part of the JSON packet, typically a
+    // String used to hold the first label of the JSON packet, typically a
     // unique identifier for the sensor host
-    String TheTag;
+    String SensorID;
     
     // Connect to the ifttt service. Returns true if connection was successful
     virtual bool Connect (void);
@@ -44,13 +42,19 @@ class IFTTTMessageClass : MessageSenderClass
 
 
   public:
-   // Constructor - pass in API key for IFTTT and a tag to use in the JSON packet,
-   // which is typically a unique identifier for this host
-   IFTTTMessageClass (const char* theAPIKey, char* theTag);
+   // Constructor - doens't do much because we have to wait until configuration
+   // is loaded from the personality file before initializing this object
+   IFTTTMessageClass (void);
+
+   // Initialize - pass in API key for IFTTT and a tag to use in the JSON packet,
+   // which is typically a unique identifier for this host. This can't be done in
+   // constructor as we have to wait for personality to be read from EEPROM. Call
+   // this method once before calling Send()
+   void Initialize (const char* theAPIKey, const char* sensorID);
 
     // Send a message. Return value indicates whether or not message was successfully sent
     virtual bool Send (String theMessage);
-
+    
 };
 
 #endif
