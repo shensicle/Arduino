@@ -47,6 +47,9 @@ const int  theSensorPin  = A0;        // Analog IO pin connected to water level 
 // Buzzer stuff
 //const int theBuzzerPin = D4;          // Digital IO pin for buzzer
 
+// LED stuff - use built-in LED connected to D2
+const int theLEDPin = LED_BUILTIN;
+
 WaterDetectState CurrentState = WaterDetectState::NO_SENSOR_DETECT,
                  PreviousState = WaterDetectState::NO_SENSOR_DETECT;
       
@@ -60,6 +63,9 @@ void setup() {
 
   // Start serial communication for debug information
   Serial.begin(115200); 
+
+  // Set up control pin for LED
+  pinMode (theLEDPin, OUTPUT);
 
   // Clear personality structure, just because
   memset (&pers, 0, sizeof (pers));
@@ -239,4 +245,9 @@ void ServiceWaterSensor(void)
 // --------------------------------------------------------------------------------------------------
 void ServiceLED (void)
 {
+  static int ledState = 0;
+
+  digitalWrite(theLEDPin, ledState);
+  ledState = 1 - ledState;
+  
 }
