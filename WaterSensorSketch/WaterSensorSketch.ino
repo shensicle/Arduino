@@ -27,35 +27,27 @@
 #include <Personality.h>
 
 // Constants we use in the loop() method to serivce hardware at different intervals
-const unsigned int delayPerLoop = 500;   //milliseconds
-const unsigned int ledUpdateCount = 1;   // update LED every half second
-const unsigned int waterSensorUpdateCount =  20;  // check water sensor every 10 seconds
-const unsigned int tempSensorUpdateCount  = 20;   // check temperature sensor every 10 seconds
+const unsigned int DelayPerLoop = 500;   //milliseconds
+const unsigned int LedUpdateCount = 1;   // update LED every half second
+const unsigned int WaterSensorUpdateCount =  20;  // check water sensor every 10 seconds
+const unsigned int TempSensorUpdateCount  = 20;   // check temperature sensor every 10 seconds
 
 // --------------------------------------------------------------------------------------------------
 
 IFTTTMessageClass IFTTTSender;   // Communicates with ifttt.com
 
 // Structure that stores our personality
-personality_t pers;
-
+personality_t ThePersonality;
 
 
 // Water sensor stuff
-const int  theSensorPin  = A0;        // Analog IO pin connected to water level sensor
+const int  TheSensorPin  = A0;        // Analog IO pin connected to water level sensor
 
 // Buzzer stuff
-//const int theBuzzerPin = D4;          // Digital IO pin for buzzer
+//const int TheBuzzerPin = D4;          // Digital IO pin for buzzer
 
 // LED stuff - use built-in LED connected to D2
-const int theLEDPin = LED_BUILTIN;
-
-WaterDetectState CurrentState = WaterDetectState::NO_SENSOR_DETECT,
-                 PreviousState = WaterDetectState::NO_SENSOR_DETECT;
-      
-
-// Need to make this
-WaterSensorClass theWaterSensor (theSensorPin); // constructor initializes pin, initializes everything else
+const int TheLEDPin = LED_BUILTIN;
 
 
 // --------------------------------------------------------------------------------------------------
@@ -65,29 +57,29 @@ void setup() {
   Serial.begin(115200); 
 
   // Set up control pin for LED
-  pinMode (theLEDPin, OUTPUT);
+  pinMode (TheLEDPin, OUTPUT);
 
   // Clear personality structure, just because
-  memset (&pers, 0, sizeof (pers));
+  memset (&ThePersonality, 0, sizeof (ThePersonality));
 
   // Object to read personality data from EEPROM
   PersonalityClass persReader;
 
-  bool okay = persReader.Read(&pers);
+  bool okay = persReader.Read(&ThePersonality);
   if (okay == true)
   {
     Serial.print ("\nChecksum is "); Serial.println (okay);
-    Serial.print ("Sensor ID: "); Serial.println (pers.UUID);
+    Serial.print ("Sensor ID: "); Serial.println (ThePersonality.UUID);
 
    // We can now initialize fields to be sent to IFTTT that were in the personality
-   IFTTTSender.Initialize (pers.IFTTTKey, pers.UUID);
+   IFTTTSender.Initialize (ThePersonality.IFTTTKey, ThePersonality.UUID);
 
    // And if we have a buzzer, set it up too
-// if (pers.HasBuzzer)
-//     pinMode(buzzerPin, OUTPUT);
+// if (ThePersonality.HasBuzzer)
+//     pinMode(TheBuzzerPin, OUTPUT);
 
        // Now connect to Wifi for the first time and send a startup message
-       ConnectWifi(pers.WifiSSID, pers.WifiPassword);  // Connect to WiFi 
+       ConnectWifi(ThePersonality.WifiSSID, ThePersonality.WifiPassword);  // Connect to WiFi 
 
        IFTTTSender.Send ("Device startup");
   }
@@ -111,26 +103,26 @@ void loop()
   // If  we're connected to Wifi ...
   if(WiFi.status() != WL_CONNECTED) 
   {
-      ConnectWifi(pers.WifiSSID, pers.WifiPassword);  // Connect to WiFi  
+      ConnectWifi(ThePersonality.WifiSSID, ThePersonality.WifiPassword);  // Connect to WiFi  
   }
   
   else  // We are connected to Wifi. Read sensors and deal with the result
   {
 
-    if ((loopCounter % waterSensorUpdateCount) == 0)
+    if (ThePersonality.HasWaterSensor && ((loopCounter % WaterSensorUpdateCount) == 0))
       ServiceWaterSensor();
 
-//  if ((loopCounter % tempSensorUpdateCount) == 0)
-    // ServiceTemperatureSensor();
+    if (ThePersonality.HasTempSensor && ((loopCounter % TempSensorUpdateCount) == 0))
+      ServiceTemperatureSensor();
 
-    if ((loopCounter % ledUpdateCount) == 0)
+    if ((loopCounter % LedUpdateCount) == 0)
       ServiceLED ();
 
     loopCounter ++;
   }
   
   // Wait 10 seconds before doing anything again
-  delay (delayPerLoop);
+  delay (DelayPerLoop);
 
 }
 
@@ -169,10 +161,17 @@ bool ConnectWifi(char* ssid, char* password)  // Tries to connect to the wireles
 // --------------------------------------------------------------------------------------------------
 void ServiceWaterSensor(void)
 {
+    static WaterDetectState CurrentState = WaterDetectState::NO_SENSOR_DETECT,
+                 PreviousState = WaterDetectState::NO_SENSOR_DETECT;
+      
+    // Manage the water sensor
+    static WaterSensorClass TheWaterSensor (TheSensorPin);
+
+
     // Poll the sensor. There's a small chance that water could rise from
     // zero to deep right after the read, but since I'm using this to monitor a basement,
     // that would likely require a tsunami.
-    CurrentState = theWaterSensor.ReadSensor ();
+    CurrentState = TheWaterSensor.ReadSensor ();
 
 
     // Now run through the FSM. We don't need to do anything if the state hasn't changed since last time
@@ -247,7 +246,13 @@ void ServiceLED (void)
 {
   static int ledState = 0;
 
-  digitalWrite(theLEDPin, ledState);
+  digitalWrite(TheLEDPin, ledState);
   ledState = 1 - ledState;
+  
+}
+
+// --------------------------------------------------------------------------------------------------
+void ServiceTemperatureSensor (void)
+{
   
 }
