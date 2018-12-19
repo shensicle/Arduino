@@ -27,10 +27,12 @@
 #include <Personality.h>
 
 // Constants we use in the loop() method to serivce hardware at different intervals
-const unsigned int DelayPerLoop = 500;   //milliseconds
+const unsigned int DelayPerLoop = 500;   // milliseconds
 const unsigned int LedUpdateCount = 1;   // update LED every half second
 const unsigned int WaterSensorUpdateCount =  20;  // check water sensor every 10 seconds
 const unsigned int TempSensorUpdateCount  = 20;   // check temperature sensor every 10 seconds
+
+bool StartupMessageSent = false;
 
 // --------------------------------------------------------------------------------------------------
 
@@ -81,7 +83,11 @@ void setup() {
        // Now connect to Wifi for the first time and send a startup message
        ConnectWifi(ThePersonality.WifiSSID, ThePersonality.WifiPassword);  // Connect to WiFi 
 
-       IFTTTSender.Send ("Device startup");
+       if (WiFi.status() == WL_CONNECTED)
+       {
+           IFTTTSender.Send ("Device startup");
+           StartupMessageSent = true;
+       }
   }
 
   else
@@ -90,7 +96,11 @@ void setup() {
 
      // No point in continuing
      while (1)
-       delay (500);
+     {
+       ServiceLED();
+      delay (DelayPerLoop/4);  // Flash LED 4 times faster when in fault mode
+     }
+       
   }
 }
 
@@ -101,9 +111,18 @@ void loop()
   static unsigned int loopCounter = 0;
   
   // If  we're connected to Wifi ...
-  if(WiFi.status() != WL_CONNECTED) 
+  if (WiFi.status() != WL_CONNECTED) 
   {
-      ConnectWifi(ThePersonality.WifiSSID, ThePersonality.WifiPassword);  // Connect to WiFi  
+      ConnectWifi(ThePersonality.WifiSSID, ThePersonality.WifiPassword);  // Connect to WiFi
+
+      // If we are now connected and this is the first successful connect, send a device startup message. This handles the
+      // case where power to the whole house goes off and this device comes up before the Wifi does
+      if ((WiFi.status() == WL_CONNECTED) && (StartupMessageSent == false))
+      {
+          StartupMessageSent = true;
+          IFTTTSender.Send ("Device startup (delayed waiting for Wifi)");
+      }
+
   }
   
   else  // We are connected to Wifi. Read sensors and deal with the result
