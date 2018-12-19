@@ -27,11 +27,14 @@
 #include <Personality.h>
 
 // Constants we use in the loop() method to serivce hardware at different intervals
-const unsigned int DelayPerLoop = 500;   // milliseconds
-const unsigned int LedUpdateCount = 1;   // update LED every half second
-const unsigned int WaterSensorUpdateCount =  20;  // check water sensor every 10 seconds
-const unsigned int TempSensorUpdateCount  = 20;   // check temperature sensor every 10 seconds
+const unsigned int DelayPerLoop = 500;           // milliseconds
+const unsigned int LedUpdateCount = 1;           // update LED every half second
+const unsigned int WaterSensorUpdateCount = 20;  // check water sensor every 10 seconds
+const unsigned int TempSensorUpdateCount  = 20;  // check temperature sensor every 10 seconds
 
+// Flag which, when set, indicates that a device startup notification has been sent to ifttt.com. An attempt
+// is made to send at startup, but if power to the wifi router was also interrupted, it will not likely be
+// operational before this device is up and running.
 bool StartupMessageSent = false;
 
 // --------------------------------------------------------------------------------------------------
@@ -67,40 +70,43 @@ void setup() {
   // Object to read personality data from EEPROM
   PersonalityClass persReader;
 
+  // Read personaility and validate the checksum
   bool okay = persReader.Read(&ThePersonality);
+
+  // If the personality checksum test passed
   if (okay == true)
   {
     Serial.print ("\nChecksum is "); Serial.println (okay);
     Serial.print ("Sensor ID: "); Serial.println (ThePersonality.UUID);
 
-   // We can now initialize fields to be sent to IFTTT that were in the personality
-   IFTTTSender.Initialize (ThePersonality.IFTTTKey, ThePersonality.UUID);
+    // We can now initialize fields to be sent to IFTTT that were in the personality
+    IFTTTSender.Initialize (ThePersonality.IFTTTKey, ThePersonality.UUID);
 
    // And if we have a buzzer, set it up too
 // if (ThePersonality.HasBuzzer)
 //     pinMode(TheBuzzerPin, OUTPUT);
 
-       // Now connect to Wifi for the first time and send a startup message
-       ConnectWifi(ThePersonality.WifiSSID, ThePersonality.WifiPassword);  // Connect to WiFi 
+    // Now connect to Wifi for the first time and send a startup message
+    ConnectWifi(ThePersonality.WifiSSID, ThePersonality.WifiPassword);  // Connect to WiFi 
 
-       if (WiFi.status() == WL_CONNECTED)
-       {
-           IFTTTSender.Send ("Device startup");
-           StartupMessageSent = true;
-       }
+    // If wifi connected, send device startup message
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        IFTTTSender.Send ("Device startup");
+         StartupMessageSent = true;           // don't want to do this again until next power up
+    }
   }
 
   else
   {
-     Serial.println ("*** Personality checksum failure ***");
+      Serial.println ("*** Personality checksum failure ***");
 
-     // No point in continuing
-     while (1)
-     {
-       ServiceLED();
-      delay (DelayPerLoop/4);  // Flash LED 4 times faster when in fault mode
-     }
-       
+      // No point in continuing
+      while (1)
+      {
+          ServiceLED();
+          delay (DelayPerLoop/4);  // Flash LED 4 times faster when in fault mode
+      } 
   }
 }
 
@@ -110,7 +116,7 @@ void loop()
   // Count each loop to determine when we're supposed to service the various hardware devices
   static unsigned int loopCounter = 0;
   
-  // If  we're connected to Wifi ...
+  // If  we're not connected to Wifi ...
   if (WiFi.status() != WL_CONNECTED) 
   {
       ConnectWifi(ThePersonality.WifiSSID, ThePersonality.WifiPassword);  // Connect to WiFi
@@ -149,32 +155,34 @@ void loop()
 // --------------------------------------------------------------------------------------------------
 bool ConnectWifi(char* ssid, char* password)  // Tries to connect to the wireless access point with the credentials provided
 {
-  bool timeOut = 0; // Change to 1 if connection times out
-  byte attempts = 0;   // Counter for the number of attempts to connect to wireless AP
+    bool timeOut = 0; // Change to 1 if connection times out
+    byte attempts = 0;   // Counter for the number of attempts to connect to wireless AP
   
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
   
-  WiFi.begin(ssid, password); // Connect to WiFi network
+    WiFi.begin(ssid, password); // Connect to WiFi network
 
-  while (WiFi.status() != WL_CONNECTED && (timeOut == 0)) // Test to see if we're connected
-  {
-    Serial.print('.');
-    attempts++;
+    while (WiFi.status() != WL_CONNECTED && (timeOut == 0)) // Test to see if we're connected
+    {
+        Serial.print('.');
+        attempts++;
     
-    if(attempts > 60) break; // Give up after ~30 seconds
-    else delay(500);      // Check again after 500ms
-  }
+        if(attempts > 60) 
+            break; // Give up after ~30 seconds
+        else 
+            delay(500);      // Check again after 500ms
+    }
   
-  if (WiFi.status() == WL_CONNECTED)  // We're connected
-  {
-    Serial.println("\r\nWiFi connected");
-  }
-  else  // Unable to connect
-  {
-    WiFi.disconnect();
-    Serial.println("\r\nConnection Timed Out!\r\n");
-  }
+    if (WiFi.status() == WL_CONNECTED)  // We're connected
+    {
+        Serial.println("\r\nWiFi connected");
+    }
+    else  // Unable to connect
+    {
+        WiFi.disconnect();
+        Serial.println("\r\nConnection Timed Out!\r\n");
+    }
 }
 
 // --------------------------------------------------------------------------------------------------
@@ -265,7 +273,7 @@ void ServiceLED (void)
 {
   static int ledState = 0;
 
-  digitalWrite(TheLEDPin, ledState);
+  digitalWrite (TheLEDPin, ledState);
   ledState = 1 - ledState;
   
 }
