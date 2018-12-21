@@ -105,7 +105,7 @@ void setup() {
       while (1)
       {
           ServiceLED();
-          delay (DelayPerLoop/4);  // Flash LED 4 times faster when in fault mode
+          delay (DelayPerLoop/8);  // Flash LED 8 times faster when in fault mode
       } 
   }
 }
